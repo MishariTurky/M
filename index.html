@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="h-full dark">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fintech Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&amp;family=DM+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        ar: ['Tajawal', 'sans-serif'],
+        en: ['DM Sans', 'sans-serif']
+      },
+      colors: {
+        brand: { 50:'#eef7ff',100:'#d9edff',200:'#bce0ff',300:'#8ecdff',400:'#53b1ff',500:'#2991ff',600:'#0d6efd',700:'#0a5ae0',800:'#1048b5',900:'#0f3d8e' },
+        dark: { 50:'#f6f6f7',100:'#e2e3e5',200:'#c4c6cb',300:'#a4a7af',400:'#848893',500:'#696d79',600:'#545761',700:'#44464e',800:'#2a2c33',900:'#1a1b21',950:'#0f1015' }
+      }
+    }
+  }
+}
+</script>
+  <style>
+html, body { height: 100%; margin: 0; }
+.glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); }
+.glass-light { background: rgba(255,255,255,0.65); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.5); }
+.dark .glass-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
+.light .glass-card { background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(12px); box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
+.dark .glass-modal { background: rgba(26,27,33,0.92); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(40px); }
+.light .glass-modal { background: rgba(255,255,255,0.88); border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(40px); box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+.sidebar-link { transition: all 0.2s; }
+.sidebar-link:hover, .sidebar-link.active { background: rgba(13,110,253,0.15); color: #2991ff; }
+.light .sidebar-link:hover, .light .sidebar-link.active { background: rgba(13,110,253,0.1); }
+.btn-primary { background: linear-gradient(135deg, #0d6efd 0%, #2991ff 100%); transition: all 0.25s; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(13,110,253,0.35); }
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.slide-up { animation: slideUp 0.35s ease; }
+.chart-bar { transition: height 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+.toggle-switch { width: 44px; height: 24px; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+.toggle-switch::after { content:''; position:absolute; width:20px; height:20px; border-radius:50%; background:#fff; top:2px; transition: transform 0.3s; }
+[dir="rtl"] .toggle-switch::after { right: 2px; }
+[dir="ltr"] .toggle-switch::after { left: 2px; }
+.toggle-switch.on { background: #0d6efd; }
+.toggle-switch.off { background: #545761; }
+[dir="rtl"] .toggle-switch.on::after { transform: translateX(-20px); }
+[dir="ltr"] .toggle-switch.on::after { transform: translateX(20px); }
+.tooltip-wrap { position: relative; }
+.tooltip-wrap .tip { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); padding:4px 10px; border-radius:6px; font-size:12px; white-space:nowrap; z-index:50; }
+.dark .tooltip-wrap .tip { background:#2a2c33; color:#e2e3e5; }
+.light .tooltip-wrap .tip { background:#44464e; color:#fff; }
+.tooltip-wrap:hover .tip { display:block; }
+.number-input { -moz-appearance: textfield; }
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full flex overflow-hidden transition-colors duration-300 dark:bg-dark-950 bg-gray-50" style="font-family: 'Tajawal', sans-serif;"><!-- Mobile Sidebar Overlay -->
+   <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleMobileSidebar()"></div><!-- Sidebar -->
+   <aside id="sidebar" class="w-64 h-full flex-shrink-0 flex flex-col z-50 transition-all duration-300 dark:bg-dark-900/80 bg-white/80 backdrop-blur-xl border-e dark:border-white/5 border-gray-200 fixed lg:relative -translate-x-full lg:translate-x-0 rtl:translate-x-full rtl:lg:translate-x-0"><!-- Logo -->
+    <div class="p-5 flex items-center gap-3 border-b dark:border-white/5 border-gray-200">
+     <div class="w-10 h-10 rounded-xl btn-primary flex items-center justify-center"><i data-lucide="wallet" class="w-5 h-5 text-white"></i>
+     </div><span class="text-lg font-bold dark:text-white text-dark-900" id="logoText">فِنتِك</span>
+    </div><!-- Nav -->
+    <nav class="flex-1 p-3 overflow-y-auto space-y-1"><a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium" data-page="dashboard" onclick="navigate('dashboard',event)"> <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span data-i18n="nav.dashboard"></span> </a> <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-600" data-page="transactions" onclick="navigate('transactions',event)"> <i data-lucide="arrow-left-right" class="w-5 h-5"></i><span data-i18n="nav.transactions"></span> </a> <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-600" data-page="cards" onclick="navigate('cards',event)"> <i data-lucide="credit-card" class="w-5 h-5"></i><span data-i18n="nav.cards"></span> </a> <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-600" data-page="analytics" onclick="navigate('analytics',event)"> <i data-lucide="bar-chart-3" class="w-5 h-5"></i><span data-i18n="nav.analytics"></span> </a> <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-600" data-page="invoices" onclick="navigate('invoices',event)"> <i data-lucide="file-text" class="w-5 h-5"></i><span data-i18n="nav.invoices"></span> </a> <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-600" data-page="settings" onclick="navigate('settings',event)"> <i data-lucide="settings" class="w-5 h-5"></i><span data-i18n="nav.settings"></span> </a>
+    </nav><!-- User -->
+    <div class="p-4 border-t dark:border-white/5 border-gray-200">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-bold">
+       أ
+      </div>
+      <div class="flex-1 min-w-0">
+       <p class="text-sm font-medium dark:text-white text-dark-900 truncate" data-i18n="user.name"></p>
+       <p class="text-xs dark:text-gray-500 text-gray-400" data-i18n="user.role"></p>
+      </div><button class="tooltip-wrap p-1.5 rounded-lg dark:hover:bg-white/5 hover:bg-gray-100 transition" onclick="openModal('logoutModal')"> <i data-lucide="log-out" class="w-4 h-4 dark:text-gray-400 text-gray-500"></i> <span class="tip" data-i18n="actions.logout"></span> </button>
+     </div>
+    </div>
+   </aside><!-- Main -->
+   <div class="flex-1 flex flex-col h-full overflow-hidden"><!-- Header -->
+    <header class="flex-shrink-0 h-16 flex items-center justify-between px-4 lg:px-6 border-b dark:border-white/5 border-gray-200 dark:bg-dark-950/50 bg-white/50 backdrop-blur-sm">
+     <div class="flex items-center gap-3"><button class="lg:hidden p-2 rounded-lg dark:hover:bg-white/5 hover:bg-gray-100" onclick="toggleMobileSidebar()"> <i data-lucide="menu" class="w-5 h-5 dark:text-white text-dark-900"></i> </button>
+      <h1 class="text-lg font-bold dark:text-white text-dark-900" id="pageTitle" data-i18n="nav.dashboard"></h1>
+     </div>
+     <div class="flex items-center gap-2"><!-- Search -->
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl dark:bg-white/5 bg-gray-100 border dark:border-white/5 border-gray-200"><i data-lucide="search" class="w-4 h-4 dark:text-gray-400 text-gray-500"></i> <input type="text" class="bg-transparent border-none outline-none text-sm dark:text-white text-dark-900 w-32 placeholder:text-gray-400" data-i18n-placeholder="actions.search">
+      </div><!-- Notifications --> <button class="tooltip-wrap relative p-2 rounded-xl dark:hover:bg-white/5 hover:bg-gray-100 transition" onclick="openModal('notifModal')"> <i data-lucide="bell" class="w-5 h-5 dark:text-gray-300 text-gray-600"></i> <span class="absolute top-1.5 end-1.5 w-2 h-2 bg-red-500 rounded-full"></span> <span class="tip" data-i18n="nav.notifications"></span> </button> <!-- Lang Toggle --> <button class="p-2 rounded-xl dark:hover:bg-white/5 hover:bg-gray-100 transition text-sm font-semibold dark:text-gray-300 text-gray-600" onclick="toggleLang()" id="langBtn">EN</button> <!-- Theme Toggle --> <button class="tooltip-wrap p-2 rounded-xl dark:hover:bg-white/5 hover:bg-gray-100 transition" onclick="toggleTheme()"> <i data-lucide="sun" class="w-5 h-5 dark:text-yellow-400 text-gray-600 dark:block hidden"></i> <i data-lucide="moon" class="w-5 h-5 dark:text-gray-300 text-gray-600 dark:hidden block"></i> <span class="tip" data-i18n="actions.theme"></span> </button>
+     </div>
+    </header><!-- Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-6" id="mainContent"><!-- DASHBOARD PAGE -->
+     <div id="page-dashboard" class="page-content space-y-6"><!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+       <div class="glass-card rounded-2xl p-5 slide-up" style="animation-delay:0ms">
+        <div class="flex items-center justify-between mb-3">
+         <div class="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center">
+          <i data-lucide="wallet" class="w-5 h-5 text-brand-500"></i>
+         </div><span class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">+12.5%</span>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">$54,230</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="stats.totalBalance"></p>
+       </div>
+       <div class="glass-card rounded-2xl p-5 slide-up" style="animation-delay:80ms">
+        <div class="flex items-center justify-between mb-3">
+         <div class="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+          <i data-lucide="trending-up" class="w-5 h-5 text-emerald-500"></i>
+         </div><span class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">+8.2%</span>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">$12,680</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="stats.income"></p>
+       </div>
+       <div class="glass-card rounded-2xl p-5 slide-up" style="animation-delay:160ms">
+        <div class="flex items-center justify-between mb-3">
+         <div class="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center">
+          <i data-lucide="trending-down" class="w-5 h-5 text-rose-500"></i>
+         </div><span class="text-xs font-medium text-rose-400 bg-rose-400/10 px-2 py-0.5 rounded-full">-3.1%</span>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">$4,350</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="stats.expenses"></p>
+       </div>
+       <div class="glass-card rounded-2xl p-5 slide-up" style="animation-delay:240ms">
+        <div class="flex items-center justify-between mb-3">
+         <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+          <i data-lucide="repeat" class="w-5 h-5 text-amber-500"></i>
+         </div><span class="text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">142</span>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">1,284</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="stats.transactions"></p>
+       </div>
+      </div><!-- Chart + Quick Actions -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4"><!-- Chart -->
+       <div class="xl:col-span-2 glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-5">
+         <h3 class="font-bold dark:text-white text-dark-900" data-i18n="chart.title"></h3>
+         <div class="flex gap-1 text-xs"><button class="px-3 py-1 rounded-lg bg-brand-500/15 text-brand-500 font-medium" data-i18n="chart.weekly"></button> <button class="px-3 py-1 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-white/5 hover:bg-gray-100" data-i18n="chart.monthly"></button>
+         </div>
+        </div>
+        <div class="flex items-end gap-2 h-44" id="chartBars"></div>
+       </div><!-- Quick Actions -->
+       <div class="glass-card rounded-2xl p-5">
+        <h3 class="font-bold dark:text-white text-dark-900 mb-4" data-i18n="quickActions.title"></h3>
+        <div class="grid grid-cols-2 gap-3"><button onclick="openModal('sendModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 dark:hover:bg-white/10 hover:bg-gray-100 transition group">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+           <i data-lucide="send" class="w-5 h-5 text-brand-500"></i>
+          </div><span class="text-xs font-medium dark:text-gray-300 text-gray-600" data-i18n="quickActions.send"></span> </button> <button onclick="openModal('receiveModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 dark:hover:bg-white/10 hover:bg-gray-100 transition group">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+           <i data-lucide="download" class="w-5 h-5 text-emerald-500"></i>
+          </div><span class="text-xs font-medium dark:text-gray-300 text-gray-600" data-i18n="quickActions.receive"></span> </button> <button onclick="openModal('exchangeModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 dark:hover:bg-white/10 hover:bg-gray-100 transition group">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+           <i data-lucide="repeat" class="w-5 h-5 text-purple-500"></i>
+          </div><span class="text-xs font-medium dark:text-gray-300 text-gray-600" data-i18n="quickActions.exchange"></span> </button> <button onclick="openModal('topupModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 dark:hover:bg-white/10 hover:bg-gray-100 transition group">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+           <i data-lucide="plus-circle" class="w-5 h-5 text-amber-500"></i>
+          </div><span class="text-xs font-medium dark:text-gray-300 text-gray-600" data-i18n="quickActions.topup"></span> </button>
+        </div>
+       </div>
+      </div><!-- Recent Transactions -->
+      <div class="glass-card rounded-2xl p-5">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold dark:text-white text-dark-900" data-i18n="transactions.recent"></h3><button class="text-xs text-brand-500 font-medium hover:underline" onclick="navigate('transactions',event)" data-i18n="actions.viewAll"></button>
+       </div>
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="dark:text-gray-400 text-gray-500 text-xs border-b dark:border-white/5 border-gray-200">
+           <th class="text-start pb-3 font-medium" data-i18n="table.recipient"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.date"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.amount"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.status"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.action"></th>
+          </tr>
+         </thead>
+         <tbody id="txTableBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- TRANSACTIONS PAGE -->
+     <div id="page-transactions" class="page-content hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+       <div class="flex gap-2"><button class="px-4 py-2 rounded-xl text-sm font-medium bg-brand-500/15 text-brand-500" data-i18n="filter.all"></button> <button class="px-4 py-2 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-500 dark:hover:bg-white/5 hover:bg-gray-100" data-i18n="filter.income2"></button> <button class="px-4 py-2 rounded-xl text-sm font-medium dark:text-gray-400 text-gray-500 dark:hover:bg-white/5 hover:bg-gray-100" data-i18n="filter.expenses2"></button>
+       </div><button onclick="openModal('sendModal')" class="btn-primary text-white text-sm px-4 py-2 rounded-xl font-medium flex items-center gap-2"> <i data-lucide="plus" class="w-4 h-4"></i><span data-i18n="actions.newTransfer"></span> </button>
+      </div>
+      <div class="glass-card rounded-2xl p-5">
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="dark:text-gray-400 text-gray-500 text-xs border-b dark:border-white/5 border-gray-200">
+           <th class="text-start pb-3 font-medium">#</th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.recipient"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.type"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.date"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.amount"></th>
+           <th class="text-start pb-3 font-medium" data-i18n="table.status"></th>
+          </tr>
+         </thead>
+         <tbody id="fullTxTableBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- CARDS PAGE -->
+     <div id="page-cards" class="page-content hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5"><!-- Card 1 -->
+       <div class="relative rounded-2xl p-6 overflow-hidden h-48" style="background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);">
+        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22white%22 opacity=%220.1%22/></svg>');"></div>
+        <div class="relative z-10 h-full flex flex-col justify-between">
+         <div class="flex justify-between items-start"><span class="text-white/70 text-sm font-medium">Visa Platinum</span>
+          <svg width="40" height="26" viewbox="0 0 40 26">
+           <circle cx="14" cy="13" r="12" fill="rgba(255,255,255,0.5)" /><circle cx="26" cy="13" r="12" fill="rgba(255,255,255,0.3)" />
+          </svg>
+         </div>
+         <div>
+          <p class="text-white text-lg tracking-[0.25em] font-medium mb-2" dir="ltr">•••• •••• •••• 4829</p>
+          <div class="flex justify-between">
+           <div>
+            <p class="text-white/50 text-[10px]" data-i18n="cards.holder"></p>
+            <p class="text-white text-sm" data-i18n="user.name"></p>
+           </div>
+           <div>
+            <p class="text-white/50 text-[10px]" data-i18n="cards.expires"></p>
+            <p class="text-white text-sm">09/27</p>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div><!-- Card 2 -->
+       <div class="relative rounded-2xl p-6 overflow-hidden h-48" style="background: linear-gradient(135deg, #1a1b21 0%, #2a2c33 100%); border: 1px solid rgba(255,255,255,0.1);">
+        <div class="relative z-10 h-full flex flex-col justify-between">
+         <div class="flex justify-between items-start"><span class="text-white/70 text-sm font-medium">Mastercard Gold</span>
+          <svg width="40" height="26" viewbox="0 0 40 26">
+           <circle cx="14" cy="13" r="12" fill="#eb001b" opacity="0.8" /><circle cx="26" cy="13" r="12" fill="#f79e1b" opacity="0.8" />
+          </svg>
+         </div>
+         <div>
+          <p class="text-white text-lg tracking-[0.25em] font-medium mb-2" dir="ltr">•••• •••• •••• 7153</p>
+          <div class="flex justify-between">
+           <div>
+            <p class="text-white/50 text-[10px]" data-i18n="cards.holder"></p>
+            <p class="text-white text-sm" data-i18n="user.name"></p>
+           </div>
+           <div>
+            <p class="text-white/50 text-[10px]" data-i18n="cards.expires"></p>
+            <p class="text-white text-sm">03/26</p>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- Card Actions -->
+      <div class="glass-card rounded-2xl p-5">
+       <h3 class="font-bold dark:text-white text-dark-900 mb-4" data-i18n="cards.manage"></h3>
+       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3"><button onclick="openModal('cardFreezeModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 hover:bg-gray-100 dark:hover:bg-white/10 transition"> <i data-lucide="lock" class="w-5 h-5 text-rose-400"></i> <span class="text-xs dark:text-gray-300 text-gray-600" data-i18n="cards.freeze"></span> </button> <button onclick="openModal('cardLimitModal')" class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 hover:bg-gray-100 dark:hover:bg-white/10 transition"> <i data-lucide="sliders" class="w-5 h-5 text-brand-400"></i> <span class="text-xs dark:text-gray-300 text-gray-600" data-i18n="cards.limits"></span> </button> <button class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 hover:bg-gray-100 dark:hover:bg-white/10 transition"> <i data-lucide="eye" class="w-5 h-5 text-emerald-400"></i> <span class="text-xs dark:text-gray-300 text-gray-600" data-i18n="cards.details"></span> </button> <button class="flex flex-col items-center gap-2 p-4 rounded-xl dark:bg-white/5 bg-gray-50 hover:bg-gray-100 dark:hover:bg-white/10 transition"> <i data-lucide="settings" class="w-5 h-5 text-amber-400"></i> <span class="text-xs dark:text-gray-300 text-gray-600" data-i18n="cards.settings"></span> </button>
+       </div>
+      </div>
+     </div><!-- ANALYTICS PAGE -->
+     <div id="page-analytics" class="page-content hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div class="glass-card rounded-2xl p-5 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
+         <i data-lucide="trending-up" class="w-6 h-6 text-emerald-500"></i>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">78%</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="analytics.savingsRate"></p>
+       </div>
+       <div class="glass-card rounded-2xl p-5 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-brand-500/15 flex items-center justify-center mb-3">
+         <i data-lucide="target" class="w-6 h-6 text-brand-500"></i>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">$8,500</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="analytics.monthlyGoal"></p>
+       </div>
+       <div class="glass-card rounded-2xl p-5 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-amber-500/15 flex items-center justify-center mb-3">
+         <i data-lucide="activity" class="w-6 h-6 text-amber-500"></i>
+        </div>
+        <p class="text-2xl font-bold dark:text-white text-dark-900">4.2</p>
+        <p class="text-xs dark:text-gray-400 text-gray-500 mt-1" data-i18n="analytics.avgDaily"></p>
+       </div>
+      </div><!-- Spending categories -->
+      <div class="glass-card rounded-2xl p-5">
+       <h3 class="font-bold dark:text-white text-dark-900 mb-4" data-i18n="analytics.spending"></h3>
+       <div class="space-y-3" id="spendingBars"></div>
+      </div>
+     </div><!-- INVOICES PAGE -->
+     <div id="page-invoices" class="page-content hidden space-y-6">
+      <div class="flex justify-between items-center">
+       <h3 class="font-bold dark:text-white text-dark-900" data-i18n="invoices.title"></h3><button onclick="openModal('newInvoiceModal')" class="btn-primary text-white text-sm px-4 py-2 rounded-xl font-medium flex items-center gap-2"> <i data-lucide="plus" class="w-4 h-4"></i><span data-i18n="invoices.create"></span> </button>
+      </div>
+      <div class="glass-card rounded-2xl overflow-hidden">
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="dark:text-gray-400 text-gray-500 text-xs border-b dark:border-white/5 border-gray-200">
+           <th class="text-start p-4 font-medium" data-i18n="invoices.number"></th>
+           <th class="text-start p-4 font-medium" data-i18n="invoices.client"></th>
+           <th class="text-start p-4 font-medium" data-i18n="table.amount"></th>
+           <th class="text-start p-4 font-medium" data-i18n="table.date"></th>
+           <th class="text-start p-4 font-medium" data-i18n="table.status"></th>
+          </tr>
+         </thead>
+         <tbody id="invoiceTableBody"></tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- SETTINGS PAGE -->
+     <div id="page-settings" class="page-content hidden space-y-6">
+      <div class="glass-card rounded-2xl p-5 space-y-5">
+       <h3 class="font-bold dark:text-white text-dark-900" data-i18n="settings.general"></h3>
+       <div class="space-y-4">
+        <div class="flex items-center justify-between py-2">
+         <div>
+          <p class="text-sm font-medium dark:text-white text-dark-900" data-i18n="settings.darkMode"></p>
+          <p class="text-xs dark:text-gray-400 text-gray-500" data-i18n="settings.darkModeDesc"></p>
+         </div>
+         <div id="themeToggleSwitch" class="toggle-switch on" onclick="toggleTheme()"></div>
+        </div>
+        <div class="flex items-center justify-between py-2 border-t dark:border-white/5 border-gray-200">
+         <div>
+          <p class="text-sm font-medium dark:text-white text-dark-900" data-i18n="settings.notifications"></p>
+          <p class="text-xs dark:text-gray-400 text-gray-500" data-i18n="settings.notifDesc"></p>
+         </div>
+         <div class="toggle-switch on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></div>
+        </div>
+        <div class="flex items-center justify-between py-2 border-t dark:border-white/5 border-gray-200">
+         <div>
+          <p class="text-sm font-medium dark:text-white text-dark-900" data-i18n="settings.language"></p>
+          <p class="text-xs dark:text-gray-400 text-gray-500" data-i18n="settings.langDesc"></p>
+         </div><button onclick="toggleLang()" class="px-3 py-1.5 rounded-lg text-sm font-medium dark:bg-white/5 bg-gray-100 dark:text-white text-dark-900" id="settingsLangBtn">العربية</button>
+        </div>
+       </div>
+      </div>
+      <div class="glass-card rounded-2xl p-5 space-y-4">
+       <h3 class="font-bold dark:text-white text-dark-900" data-i18n="settings.profile"></h3>
+       <form onsubmit="event.preventDefault(); showToast(t('toast.saved'))">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+         <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="settings.fullName"></label> <input type="text" class="w-full px-3 py-2 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 transition" data-i18n-value="user.name">
+         </div>
+         <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="settings.email"></label> <input type="email" value="ahmed@fintech.app" class="w-full px-3 py-2 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 transition">
+         </div>
+        </div><button type="submit" class="btn-primary text-white text-sm px-6 py-2 rounded-xl font-medium mt-4" data-i18n="actions.save"></button>
+       </form>
+      </div>
+     </div>
+    </main>
+   </div><!-- MODALS --> <!-- Send Money -->
+   <div id="sendModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-md p-6 fade-in">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="modal.sendMoney"></h3><button onclick="closeModal('sendModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200 transition"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <form onsubmit="event.preventDefault(); closeModal('sendModal'); showToast(t('toast.sent'))">
+      <div class="space-y-4">
+       <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.recipient"></label> <input required type="text" class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500" data-i18n-placeholder="modal.recipientPh">
+       </div><!-- Amount with +/- -->
+       <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.amount"></label>
+        <div class="flex items-center gap-2"><button type="button" onclick="adjustAmount('sendAmt',-50)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">−</button> <input id="sendAmt" required type="number" min="1" step="0.01" value="100" class="number-input flex-1 px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 text-center font-bold text-lg"> <button type="button" onclick="adjustAmount('sendAmt',50)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">+</button>
+        </div>
+       </div>
+       <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.note"></label> <textarea rows="2" class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 resize-none"></textarea>
+       </div>
+      </div><button type="submit" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium mt-5 flex items-center justify-center gap-2"> <i data-lucide="send" class="w-4 h-4"></i><span data-i18n="actions.sendNow"></span> </button>
+     </form>
+    </div>
+   </div><!-- Receive -->
+   <div id="receiveModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-sm p-6 fade-in text-center">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="modal.receiveMoney"></h3><button onclick="closeModal('receiveModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200 transition"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <div class="w-40 h-40 mx-auto rounded-2xl dark:bg-white/10 bg-gray-100 flex items-center justify-center mb-4">
+      <svg width="120" height="120" viewbox="0 0 120 120">
+       <rect x="10" y="10" width="100" height="100" rx="8" fill="none" stroke="currentColor" stroke-width="2" class="dark:text-white/30 text-gray-300" /><rect x="20" y="20" width="20" height="20" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="50" y="20" width="10" height="10" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="80" y="20" width="20" height="20" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="20" y="50" width="10" height="10" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="40" y="50" width="10" height="10" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="60" y="50" width="10" height="10" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="80" y="80" width="20" height="20" fill="currentColor" class="dark:text-white/40 text-gray-400" /><rect x="20" y="80" width="20" height="20" fill="currentColor" class="dark:text-white/40 text-gray-400" />
+      </svg>
+     </div>
+     <p class="text-sm dark:text-gray-300 text-gray-600 mb-2" data-i18n="modal.scanQR"></p>
+     <p class="text-xs dark:text-gray-500 text-gray-400 font-mono select-all" dir="ltr">FNT-2024-AH-8829</p><button onclick="closeModal('receiveModal'); showToast(t('toast.copied'))" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium mt-5 flex items-center justify-center gap-2"> <i data-lucide="copy" class="w-4 h-4"></i><span data-i18n="actions.copyLink"></span> </button>
+    </div>
+   </div><!-- Exchange -->
+   <div id="exchangeModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-md p-6 fade-in">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="modal.exchange"></h3><button onclick="closeModal('exchangeModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <form onsubmit="event.preventDefault(); closeModal('exchangeModal'); showToast(t('toast.exchanged'))">
+      <div class="space-y-3">
+       <div class="flex items-center gap-3">
+        <div class="flex-1"><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.from"></label> <select class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none"> <option>USD</option><option>EUR</option><option>SAR</option><option>AED</option> </select>
+        </div>
+        <div class="pt-5">
+         <i data-lucide="arrow-right" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i>
+        </div>
+        <div class="flex-1"><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.to"></label> <select class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none"> <option>EUR</option><option>USD</option><option>SAR</option><option>AED</option> </select>
+        </div>
+       </div>
+       <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.amount"></label>
+        <div class="flex items-center gap-2"><button type="button" onclick="adjustAmount('exAmt',-100)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">−</button> <input id="exAmt" required type="number" min="1" value="500" class="number-input flex-1 px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 text-center font-bold text-lg"> <button type="button" onclick="adjustAmount('exAmt',100)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">+</button>
+        </div>
+       </div>
+       <div class="text-center py-2 px-4 rounded-xl dark:bg-white/5 bg-gray-50">
+        <p class="text-xs dark:text-gray-400 text-gray-500" data-i18n="modal.rate"></p>
+        <p class="text-sm font-bold dark:text-white text-dark-900" dir="ltr">1 USD = 0.92 EUR</p>
+       </div>
+      </div><button type="submit" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium mt-5" data-i18n="actions.exchangeNow"></button>
+     </form>
+    </div>
+   </div><!-- Top Up -->
+   <div id="topupModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-md p-6 fade-in">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="modal.topup"></h3><button onclick="closeModal('topupModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <form onsubmit="event.preventDefault(); closeModal('topupModal'); showToast(t('toast.toppedup'))">
+      <div class="grid grid-cols-3 gap-2 mb-4"><button type="button" onclick="document.getElementById('topAmt').value=50" class="py-3 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 font-bold text-sm hover:border-brand-500 transition">$50</button> <button type="button" onclick="document.getElementById('topAmt').value=100" class="py-3 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 font-bold text-sm hover:border-brand-500 transition">$100</button> <button type="button" onclick="document.getElementById('topAmt').value=250" class="py-3 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 font-bold text-sm hover:border-brand-500 transition">$250</button>
+      </div>
+      <div class="flex items-center gap-2 mb-4"><button type="button" onclick="adjustAmount('topAmt',-25)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">−</button> <input id="topAmt" required type="number" min="1" value="100" class="number-input flex-1 px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 text-center font-bold text-lg"> <button type="button" onclick="adjustAmount('topAmt',25)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold text-lg hover:bg-brand-500/20 transition">+</button>
+      </div>
+      <div><label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.method"></label> <select class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none mb-4"> <option data-i18n-option="modal.bankTransfer"></option> <option>Apple Pay</option> <option>Google Pay</option> </select>
+      </div><button type="submit" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium flex items-center justify-center gap-2"> <i data-lucide="plus-circle" class="w-4 h-4"></i><span data-i18n="actions.topupNow"></span> </button>
+     </form>
+    </div>
+   </div><!-- Notifications -->
+   <div id="notifModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-sm p-6 fade-in">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold dark:text-white text-dark-900" data-i18n="nav.notifications"></h3><button onclick="closeModal('notifModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <div class="space-y-3" id="notifList"></div>
+    </div>
+   </div><!-- Logout Confirm -->
+   <div id="logoutModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-xs p-6 fade-in text-center">
+     <div class="w-14 h-14 mx-auto rounded-full bg-rose-500/15 flex items-center justify-center mb-4">
+      <i data-lucide="log-out" class="w-7 h-7 text-rose-500"></i>
+     </div>
+     <h3 class="font-bold dark:text-white text-dark-900 mb-2" data-i18n="modal.logoutTitle"></h3>
+     <p class="text-sm dark:text-gray-400 text-gray-500 mb-5" data-i18n="modal.logoutDesc"></p>
+     <div class="flex gap-3"><button onclick="closeModal('logoutModal')" class="flex-1 py-2 rounded-xl dark:bg-white/5 bg-gray-100 dark:text-white text-dark-900 text-sm font-medium hover:bg-gray-200 dark:hover:bg-white/10 transition" data-i18n="actions.cancel"></button> <button onclick="closeModal('logoutModal'); showToast(t('toast.loggedOut'))" class="flex-1 py-2 rounded-xl bg-rose-500 text-white text-sm font-medium hover:bg-rose-600 transition" data-i18n="actions.logout"></button>
+     </div>
+    </div>
+   </div><!-- Card Freeze -->
+   <div id="cardFreezeModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-xs p-6 fade-in text-center">
+     <div class="w-14 h-14 mx-auto rounded-full bg-blue-500/15 flex items-center justify-center mb-4">
+      <i data-lucide="lock" class="w-7 h-7 text-blue-500"></i>
+     </div>
+     <h3 class="font-bold dark:text-white text-dark-900 mb-2" data-i18n="modal.freezeTitle"></h3>
+     <p class="text-sm dark:text-gray-400 text-gray-500 mb-5" data-i18n="modal.freezeDesc"></p>
+     <div class="flex gap-3"><button onclick="closeModal('cardFreezeModal')" class="flex-1 py-2 rounded-xl dark:bg-white/5 bg-gray-100 dark:text-white text-dark-900 text-sm font-medium" data-i18n="actions.cancel"></button> <button onclick="closeModal('cardFreezeModal'); showToast(t('toast.frozen'))" class="flex-1 py-2 rounded-xl bg-blue-500 text-white text-sm font-medium" data-i18n="actions.confirm"></button>
+     </div>
+    </div>
+   </div><!-- Card Limit -->
+   <div id="cardLimitModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-md p-6 fade-in">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="modal.cardLimits"></h3><button onclick="closeModal('cardLimitModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <form onsubmit="event.preventDefault(); closeModal('cardLimitModal'); showToast(t('toast.saved'))">
+      <div class="space-y-4">
+       <div><label class="flex justify-between text-xs dark:text-gray-400 text-gray-500 mb-2"><span data-i18n="modal.dailyLimit"></span><span id="dailyLimitVal" class="font-bold dark:text-white text-dark-900">$2,000</span></label> <input type="range" min="100" max="10000" step="100" value="2000" class="w-full accent-brand-600" oninput="document.getElementById('dailyLimitVal').textContent='$'+Number(this.value).toLocaleString()">
+       </div>
+       <div><label class="flex justify-between text-xs dark:text-gray-400 text-gray-500 mb-2"><span data-i18n="modal.monthlyLimit"></span><span id="monthlyLimitVal" class="font-bold dark:text-white text-dark-900">$15,000</span></label> <input type="range" min="1000" max="50000" step="500" value="15000" class="w-full accent-brand-600" oninput="document.getElementById('monthlyLimitVal').textContent='$'+Number(this.value).toLocaleString()">
+       </div>
+      </div><button type="submit" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium mt-5" data-i18n="actions.save"></button>
+     </form>
+    </div>
+   </div><!-- New Invoice -->
+   <div id="newInvoiceModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-md p-6 fade-in">
+     <div class="flex items-center justify-between mb-5">
+      <h3 class="font-bold dark:text-white text-dark-900 text-lg" data-i18n="invoices.create"></h3><button onclick="closeModal('newInvoiceModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <form onsubmit="event.preventDefault(); closeModal('newInvoiceModal'); showToast(t('toast.invoiceCreated'))">
+      <div class="space-y-3">
+       <div>
+        <label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="invoices.client"></label><input required type="text" class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500">
+       </div>
+       <div>
+        <label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.amount"></label>
+        <div class="flex items-center gap-2"><button type="button" onclick="adjustAmount('invAmt',-100)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold">−</button> <input id="invAmt" required type="number" min="1" value="500" class="number-input flex-1 px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 text-center font-bold text-lg"> <button type="button" onclick="adjustAmount('invAmt',100)" class="w-10 h-10 flex-shrink-0 rounded-xl dark:bg-white/5 bg-gray-100 flex items-center justify-center dark:text-white text-dark-900 font-bold">+</button>
+        </div>
+       </div>
+       <div>
+        <label class="block text-xs dark:text-gray-400 text-gray-500 mb-1" data-i18n="modal.note"></label><textarea rows="2" class="w-full px-3 py-2.5 rounded-xl dark:bg-white/5 bg-gray-50 border dark:border-white/5 border-gray-200 dark:text-white text-dark-900 text-sm outline-none focus:border-brand-500 resize-none"></textarea>
+       </div>
+      </div><button type="submit" class="btn-primary w-full text-white text-sm py-2.5 rounded-xl font-medium mt-5" data-i18n="invoices.create"></button>
+     </form>
+    </div>
+   </div><!-- Transaction Detail -->
+   <div id="txDetailModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)">
+    <div class="glass-modal rounded-2xl w-full max-w-sm p-6 fade-in">
+     <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold dark:text-white text-dark-900" data-i18n="modal.txDetail"></h3><button onclick="closeModal('txDetailModal')" class="p-1 rounded-lg dark:hover:bg-white/10 hover:bg-gray-200"><i data-lucide="x" class="w-5 h-5 dark:text-gray-400 text-gray-500"></i></button>
+     </div>
+     <div id="txDetailContent"></div><button onclick="closeModal('txDetailModal')" class="w-full mt-4 py-2 rounded-xl dark:bg-white/5 bg-gray-100 dark:text-white text-dark-900 text-sm font-medium" data-i18n="actions.close"></button>
+    </div>
+   </div><!-- Toast -->
+   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] hidden">
+    <div class="glass-modal rounded-xl px-5 py-3 flex items-center gap-2 shadow-xl"><i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i> <span class="text-sm font-medium dark:text-white text-dark-900" id="toastMsg"></span>
+    </div>
+   </div>
+  </div>
+  <script>
+// i18n
+const translations = {
+  ar: {
+    nav: { dashboard:'لوحة التحكم', transactions:'المعاملات', cards:'البطاقات', analytics:'التحليلات', invoices:'الفواتير', settings:'الإعدادات', notifications:'الإشعارات' },
+    user: { name:'أحمد محمد', role:'مدير الحساب' },
+    stats: { totalBalance:'إجمالي الرصيد', income:'الدخل الشهري', expenses:'المصروفات', transactions:'المعاملات' },
+    chart: { title:'نظرة عامة على الإيرادات', weekly:'أسبوعي', monthly:'شهري' },
+    quickActions: { title:'إجراءات سريعة', send:'إرسال', receive:'استقبال', exchange:'تحويل', topup:'شحن' },
+    transactions: { recent:'أحدث المعاملات' },
+    table: { recipient:'المستلم', date:'التاريخ', amount:'المبلغ', status:'الحالة', action:'إجراء', type:'النوع' },
+    actions: { viewAll:'عرض الكل', search:'بحث...', theme:'تغيير المظهر', sendNow:'إرسال الآن', copyLink:'نسخ الرابط', exchangeNow:'تحويل الآن', topupNow:'شحن الآن', save:'حفظ', cancel:'إلغاء', logout:'تسجيل الخروج', confirm:'تأكيد', close:'إغلاق', newTransfer:'تحويل جديد', details:'التفاصيل' },
+    filter: { all:'الكل', income2:'الدخل', expenses2:'المصروفات' },
+    modal: { sendMoney:'إرسال أموال', recipient:'المستلم', recipientPh:'اسم أو رقم المستلم', amount:'المبلغ', note:'ملاحظة', receiveMoney:'استقبال أموال', scanQR:'امسح رمز QR لاستقبال الأموال', exchange:'تحويل العملات', from:'من', to:'إلى', rate:'سعر الصرف', topup:'شحن الرصيد', method:'طريقة الدفع', bankTransfer:'تحويل بنكي', logoutTitle:'تسجيل الخروج', logoutDesc:'هل أنت متأكد من تسجيل الخروج؟', freezeTitle:'تجميد البطاقة', freezeDesc:'سيتم تجميد البطاقة مؤقتاً', cardLimits:'حدود البطاقة', dailyLimit:'الحد اليومي', monthlyLimit:'الحد الشهري', txDetail:'تفاصيل المعاملة' },
+    cards: { holder:'حامل البطاقة', expires:'تنتهي', manage:'إدارة البطاقات', freeze:'تجميد', limits:'الحدود', details:'التفاصيل', settings:'الإعدادات' },
+    analytics: { savingsRate:'معدل التوفير', monthlyGoal:'الهدف الشهري', avgDaily:'معدل المعاملات اليومية', spending:'توزيع الإنفاق' },
+    invoices: { title:'الفواتير', create:'إنشاء فاتورة', number:'رقم الفاتورة', client:'العميل' },
+    settings: { general:'الإعدادات العامة', darkMode:'الوضع الداكن', darkModeDesc:'تفعيل المظهر الداكن', notifications:'الإشعارات', notifDesc:'تفعيل إشعارات التطبيق', language:'اللغة', langDesc:'تغيير لغة الواجهة', profile:'الملف الشخصي', fullName:'الاسم الكامل', email:'البريد الإلكتروني' },
+    toast: { sent:'تم الإرسال بنجاح', copied:'تم النسخ', exchanged:'تم التحويل بنجاح', toppedup:'تم الشحن بنجاح', saved:'تم الحفظ', loggedOut:'تم تسجيل الخروج', frozen:'تم تجميد البطاقة', invoiceCreated:'تم إنشاء الفاتورة' },
+    notif: { n1:'تم استلام $500 من سارة', n2:'تحويل ناجح بقيمة $200', n3:'تم تحديث حدود البطاقة' },
+    spending: { food:'الطعام', transport:'المواصلات', shopping:'التسوق', bills:'الفواتير', entertainment:'الترفيه' },
+    txType: { send:'إرسال', receive:'استقبال' },
+    txStatus: { completed:'مكتمل', pending:'قيد الانتظار', failed:'فشل' }
+  },
+  en: {
+    nav: { dashboard:'Dashboard', transactions:'Transactions', cards:'Cards', analytics:'Analytics', invoices:'Invoices', settings:'Settings', notifications:'Notifications' },
+    user: { name:'Ahmed Mohamed', role:'Account Manager' },
+    stats: { totalBalance:'Total Balance', income:'Monthly Income', expenses:'Expenses', transactions:'Transactions' },
+    chart: { title:'Revenue Overview', weekly:'Weekly', monthly:'Monthly' },
+    quickActions: { title:'Quick Actions', send:'Send', receive:'Receive', exchange:'Exchange', topup:'Top Up' },
+    transactions: { recent:'Recent Transactions' },
+    table: { recipient:'Recipient', date:'Date', amount:'Amount', status:'Status', action:'Action', type:'Type' },
+    actions: { viewAll:'View All', search:'Search...', theme:'Toggle Theme', sendNow:'Send Now', copyLink:'Copy Link', exchangeNow:'Exchange Now', topupNow:'Top Up Now', save:'Save', cancel:'Cancel', logout:'Logout', confirm:'Confirm', close:'Close', newTransfer:'New Transfer', details:'Details' },
+    filter: { all:'All', income2:'Income', expenses2:'Expenses' },
+    modal: { sendMoney:'Send Money', recipient:'Recipient', recipientPh:'Name or number', amount:'Amount', note:'Note', receiveMoney:'Receive Money', scanQR:'Scan QR code to receive funds', exchange:'Currency Exchange', from:'From', to:'To', rate:'Exchange Rate', topup:'Top Up', method:'Payment Method', bankTransfer:'Bank Transfer', logoutTitle:'Log Out', logoutDesc:'Are you sure you want to log out?', freezeTitle:'Freeze Card', freezeDesc:'This card will be temporarily frozen', cardLimits:'Card Limits', dailyLimit:'Daily Limit', monthlyLimit:'Monthly Limit', txDetail:'Transaction Details' },
+    cards: { holder:'Card Holder', expires:'Expires', manage:'Manage Cards', freeze:'Freeze', limits:'Limits', details:'Details', settings:'Settings' },
+    analytics: { savingsRate:'Savings Rate', monthlyGoal:'Monthly Goal', avgDaily:'Avg Daily Transactions', spending:'Spending Breakdown' },
+    invoices: { title:'Invoices', create:'Create Invoice', number:'Invoice #', client:'Client' },
+    settings: { general:'General Settings', darkMode:'Dark Mode', darkModeDesc:'Enable dark theme', notifications:'Notifications', notifDesc:'Enable app notifications', language:'Language', langDesc:'Change interface language', profile:'Profile', fullName:'Full Name', email:'Email' },
+    toast: { sent:'Sent successfully', copied:'Copied!', exchanged:'Exchange successful', toppedup:'Top up successful', saved:'Saved!', loggedOut:'Logged out', frozen:'Card frozen', invoiceCreated:'Invoice created' },
+    notif: { n1:'Received $500 from Sarah', n2:'Transfer of $200 successful', n3:'Card limits updated' },
+    spending: { food:'Food', transport:'Transport', shopping:'Shopping', bills:'Bills', entertainment:'Entertainment' },
+    txType: { send:'Send', receive:'Receive' },
+    txStatus: { completed:'Completed', pending:'Pending', failed:'Failed' }
+  }
+};
+
+let currentLang = 'ar';
+let isDark = true;
+
+function t(key) {
+  const keys = key.split('.');
+  let val = translations[currentLang];
+  for (const k of keys) { val = val?.[k]; }
+  return val || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  document.querySelectorAll('[data-i18n-value]').forEach(el => {
+    el.value = t(el.getAttribute('data-i18n-value'));
+  });
+  document.getElementById('langBtn').textContent = currentLang === 'ar' ? 'EN' : 'ع';
+  document.getElementById('settingsLangBtn').textContent = currentLang === 'ar' ? 'العربية' : 'English';
+  document.body.parentElement.lang = currentLang;
+  document.body.parentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('app').style.fontFamily = currentLang === 'ar' ? "'Tajawal', sans-serif" : "'DM Sans', sans-serif";
+  renderDynamicContent();
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'ar' ? 'en' : 'ar';
+  applyTranslations();
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.classList.toggle('dark', isDark);
+  const sw = document.getElementById('themeToggleSwitch');
+  sw.classList.toggle('on', isDark);
+  sw.classList.toggle('off', !isDark);
+  lucide.createIcons();
+}
+
+// Navigation
+let currentPage = 'dashboard';
+function navigate(page, e) {
+  if (e) e.preventDefault();
+  currentPage = page;
+  document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.remove('hidden');
+  document.querySelectorAll('.sidebar-link').forEach(l => {
+    l.classList.remove('active');
+    l.classList.toggle('active', l.getAttribute('data-page') === page);
+  });
+  document.getElementById('pageTitle').textContent = t('nav.' + page);
+  closeMobileSidebar();
+}
+
+function toggleMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const isOpen = !sb.classList.contains('-translate-x-full') && !sb.classList.contains('rtl:translate-x-full');
+  if (currentLang === 'ar') {
+    sb.classList.toggle('rtl:translate-x-full', isOpen);
+    sb.classList.toggle('translate-x-0', !isOpen);
+  } else {
+    sb.classList.toggle('-translate-x-full', isOpen);
+    sb.classList.toggle('translate-x-0', !isOpen);
+  }
+  ov.classList.toggle('hidden', isOpen);
+}
+function closeMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  if (currentLang === 'ar') {
+    sb.classList.add('rtl:translate-x-full');
+    sb.classList.remove('translate-x-0');
+  } else {
+    sb.classList.add('-translate-x-full');
+    sb.classList.remove('translate-x-0');
+  }
+  ov.classList.add('hidden');
+}
+
+// Modals
+function openModal(id) {
+  const m = document.getElementById(id);
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  lucide.createIcons();
+}
+function closeModal(id) {
+  const m = document.getElementById(id);
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+// Close modal on backdrop
+document.querySelectorAll('[id$="Modal"]').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+// Amount adjuster
+function adjustAmount(id, delta) {
+  const inp = document.getElementById(id);
+  let v = parseFloat(inp.value) || 0;
+  v = Math.max(0, v + delta);
+  inp.value = v;
+}
+
+// Toast
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.remove('hidden');
+  lucide.createIcons();
+  setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+// Mock data
+const mockTx = [
+  { name_ar:'سارة أحمد', name_en:'Sarah Ahmed', date:'2024-12-15', amount:'+$500', type:'receive', status:'completed' },
+  { name_ar:'محمد علي', name_en:'Mohamed Ali', date:'2024-12-14', amount:'-$200', type:'send', status:'completed' },
+  { name_ar:'فاطمة حسن', name_en:'Fatima Hassan', date:'2024-12-13', amount:'-$85', type:'send', status:'pending' },
+  { name_ar:'خالد عمر', name_en:'Khaled Omar', date:'2024-12-12', amount:'+$1,200', type:'receive', status:'completed' },
+  { name_ar:'نورة سعيد', name_en:'Noura Saeed', date:'2024-12-11', amount:'-$350', type:'send', status:'failed' },
+];
+
+const mockInvoices = [
+  { num:'INV-001', client_ar:'شركة التقنية', client_en:'Tech Corp', amount:'$2,500', date:'2024-12-15', status:'completed' },
+  { num:'INV-002', client_ar:'مؤسسة الأعمال', client_en:'Biz Foundation', amount:'$1,800', date:'2024-12-10', status:'pending' },
+  { num:'INV-003', client_ar:'مجموعة الابتكار', client_en:'Innovation Group', amount:'$3,200', date:'2024-12-05', status:'completed' },
+];
+
+const chartData = [65,45,80,55,90,70,85];
+const days_ar = ['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+const days_en = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+
+const spendingData = [
+  { key:'food', pct:35, color:'bg-brand-500' },
+  { key:'transport', pct:20, color:'bg-emerald-500' },
+  { key:'shopping', pct:25, color:'bg-purple-500' },
+  { key:'bills', pct:12, color:'bg-amber-500' },
+  { key:'entertainment', pct:8, color:'bg-rose-500' },
+];
+
+function statusBadge(status) {
+  const colors = { completed:'bg-emerald-400/10 text-emerald-400', pending:'bg-amber-400/10 text-amber-400', failed:'bg-rose-400/10 text-rose-400' };
+  return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status]}">${t('txStatus.'+status)}</span>`;
+}
+
+function renderDynamicContent() {
+  // Chart
+  const chartEl = document.getElementById('chartBars');
+  const dayNames = currentLang === 'ar' ? days_ar : days_en;
+  chartEl.innerHTML = chartData.map((v, i) => `
+    <div class="flex-1 flex flex-col items-center gap-1">
+      <div class="w-full rounded-lg bg-brand-500/20 relative" style="height:${v*1.6}px">
+        <div class="absolute bottom-0 w-full rounded-lg bg-gradient-to-t from-brand-600 to-brand-400 chart-bar" style="height:${v}%"></div>
+      </div>
+      <span class="text-[10px] dark:text-gray-500 text-gray-400">${dayNames[i]}</span>
+    </div>
+  `).join('');
+
+  // TX table (dashboard)
+  document.getElementById('txTableBody').innerHTML = mockTx.slice(0,4).map((tx,i) => `
+    <tr class="border-b dark:border-white/5 border-gray-100 dark:hover:bg-white/[0.02] hover:bg-gray-50 transition">
+      <td class="py-3"><div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-full ${tx.type==='receive'?'bg-emerald-500/15':'bg-rose-500/15'} flex items-center justify-center"><i data-lucide="${tx.type==='receive'?'arrow-down-left':'arrow-up-right'}" class="w-4 h-4 ${tx.type==='receive'?'text-emerald-500':'text-rose-500'}"></i></div><span class="text-sm font-medium dark:text-white text-dark-900">${currentLang==='ar'?tx.name_ar:tx.name_en}</span></div></td>
+      <td class="py-3 text-xs dark:text-gray-400 text-gray-500">${tx.date}</td>
+      <td class="py-3 text-sm font-semibold ${tx.amount.startsWith('+')?'text-emerald-400':'text-rose-400'}" dir="ltr">${tx.amount}</td>
+      <td class="py-3">${statusBadge(tx.status)}</td>
+      <td class="py-3"><button onclick="showTxDetail(${i})" class="text-xs text-brand-500 hover:underline">${t('actions.details')}</button></td>
+    </tr>
+  `).join('');
+
+  // Full TX table
+  document.getElementById('fullTxTableBody').innerHTML = mockTx.map((tx,i) => `
+    <tr class="border-b dark:border-white/5 border-gray-100 dark:hover:bg-white/[0.02] hover:bg-gray-50 transition cursor-pointer" onclick="showTxDetail(${i})">
+      <td class="py-3.5 text-xs dark:text-gray-500 text-gray-400">#${1000+i}</td>
+      <td class="py-3.5"><span class="text-sm font-medium dark:text-white text-dark-900">${currentLang==='ar'?tx.name_ar:tx.name_en}</span></td>
+      <td class="py-3.5"><span class="text-xs px-2 py-0.5 rounded-full ${tx.type==='receive'?'bg-emerald-400/10 text-emerald-400':'bg-rose-400/10 text-rose-400'}">${t('txType.'+tx.type)}</span></td>
+      <td class="py-3.5 text-xs dark:text-gray-400 text-gray-500">${tx.date}</td>
+      <td class="py-3.5 text-sm font-semibold ${tx.amount.startsWith('+')?'text-emerald-400':'text-rose-400'}" dir="ltr">${tx.amount}</td>
+      <td class="py-3.5">${statusBadge(tx.status)}</td>
+    </tr>
+  `).join('');
+
+  // Invoice table
+  document.getElementById('invoiceTableBody').innerHTML = mockInvoices.map(inv => `
+    <tr class="border-b dark:border-white/5 border-gray-100">
+      <td class="p-4 text-sm font-medium dark:text-white text-dark-900 font-mono">${inv.num}</td>
+      <td class="p-4 text-sm dark:text-gray-300 text-gray-600">${currentLang==='ar'?inv.client_ar:inv.client_en}</td>
+      <td class="p-4 text-sm font-semibold dark:text-white text-dark-900" dir="ltr">${inv.amount}</td>
+      <td class="p-4 text-xs dark:text-gray-400 text-gray-500">${inv.date}</td>
+      <td class="p-4">${statusBadge(inv.status)}</td>
+    </tr>
+  `).join('');
+
+  // Notifications
+  document.getElementById('notifList').innerHTML = ['n1','n2','n3'].map((n,i) => `
+    <div class="flex items-start gap-3 p-3 rounded-xl dark:bg-white/5 bg-gray-50">
+      <div class="w-8 h-8 rounded-full ${i===0?'bg-emerald-500/15':i===1?'bg-brand-500/15':'bg-amber-500/15'} flex items-center justify-center flex-shrink-0">
+        <i data-lucide="${i===0?'arrow-down-left':i===1?'check-circle':'sliders'}" class="w-4 h-4 ${i===0?'text-emerald-500':i===1?'text-brand-500':'text-amber-500'}"></i>
+      </div>
+      <div><p class="text-sm dark:text-white text-dark-900">${t('notif.'+n)}</p><p class="text-xs dark:text-gray-500 text-gray-400 mt-0.5">${i+1}h</p></div>
+    </div>
+  `).join('');
+
+  // Spending bars
+  document.getElementById('spendingBars').innerHTML = spendingData.map(s => `
+    <div>
+      <div class="flex justify-between text-xs mb-1"><span class="dark:text-gray-300 text-gray-600">${t('spending.'+s.key)}</span><span class="font-bold dark:text-white text-dark-900">${s.pct}%</span></div>
+      <div class="w-full h-2 rounded-full dark:bg-white/5 bg-gray-200"><div class="${s.color} h-full rounded-full transition-all duration-700" style="width:${s.pct}%"></div></div>
+    </div>
+  `).join('');
+
+  lucide.createIcons();
+}
+
+function showTxDetail(i) {
+  const tx = mockTx[i];
+  const content = document.getElementById('txDetailContent');
+  content.innerHTML = `
+    <div class="space-y-3">
+      <div class="flex justify-between py-2 border-b dark:border-white/5 border-gray-200">
+        <span class="text-xs dark:text-gray-400 text-gray-500">${t('table.recipient')}</span>
+        <span class="text-sm font-medium dark:text-white text-dark-900">${currentLang==='ar'?tx.name_ar:tx.name_en}</span>
+      </div>
+      <div class="flex justify-between py-2 border-b dark:border-white/5 border-gray-200">
+        <span class="text-xs dark:text-gray-400 text-gray-500">${t('table.amount')}</span>
+        <span class="text-sm font-bold ${tx.amount.startsWith('+')?'text-emerald-400':'text-rose-400'}" dir="ltr">${tx.amount}</span>
+      </div>
+      <div class="flex justify-between py-2 border-b dark:border-white/5 border-gray-200">
+        <span class="text-xs dark:text-gray-400 text-gray-500">${t('table.date')}</span>
+        <span class="text-sm dark:text-gray-300 text-gray-600">${tx.date}</span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-xs dark:text-gray-400 text-gray-500">${t('table.status')}</span>
+        ${statusBadge(tx.status)}
+      </div>
+    </div>
+  `;
+  openModal('txDetailModal');
+}
+
+// Element SDK
+const defaultConfig = {
+  app_title: 'فِنتِك',
+  background_color: '#0f1015',
+  surface_color: '#1a1b21',
+  text_color: '#e2e3e5',
+  primary_action_color: '#0d6efd',
+  secondary_action_color: '#545761',
+  font_family: 'Tajawal',
+  font_size: 14
+};
+
+function applyConfig(config) {
+  const title = config.app_title || defaultConfig.app_title;
+  document.getElementById('logoText').textContent = title;
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const txt = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const size = config.font_size || defaultConfig.font_size;
+
+  document.documentElement.style.setProperty('--bg', bg);
+  document.documentElement.style.setProperty('--surface', surface);
+  document.documentElement.style.setProperty('--text', txt);
+  document.documentElement.style.setProperty('--primary', primary);
+
+  document.querySelectorAll('.btn-primary').forEach(b => {
+    b.style.background = `linear-gradient(135deg, ${primary} 0%, ${primary}cc 100%)`;
+  });
+
+  const appEl = document.getElementById('app');
+  appEl.style.fontFamily = `${font}, Tajawal, DM Sans, sans-serif`;
+  document.querySelectorAll('p,span,h1,h2,h3,td,th,label,input,textarea,select,button,a').forEach(el => {
+    if (!el.closest('.btn-primary')) {
+      el.style.fontFamily = `${font}, Tajawal, DM Sans, sans-serif`;
+    }
+  });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title]
+    ])
+  });
+}
+
+// Init
+applyTranslations();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ebf12890512d1e8',t:'MTc3NjEzMTU2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
